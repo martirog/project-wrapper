@@ -11,6 +11,7 @@
 ;;    you change project.
 
 (require 'cl-lib)
+(require 'tramp)
 
 (defgroup project-wrapper nil
   "wrapper for project.el to extend functionality"
@@ -49,10 +50,18 @@ env defaults to the project env set in project-wrapper-project-env"
   ; TODO: make sure that root is absolute
   (add-to-list 'project-wrapper-project-info (cons (project-wrapper-info-root info) info)))
 
+(defun project-wrapepr-project-local-root (&optional proot)
+  "alwais return only local part of project root path"
+  (let ((pr-root (or proot (project-root (project-current)))))
+    (if (tramp-tramp-file-p pr-root)
+        (let ((vec (tramp-dissect-file-name pr-root)))
+          (tramp-file-name-localname vec))
+      pr-root)))
+
 (when (require 'etags-wrapper nil t)
   (defun project-wrapper-etags-paths-to-repos ()
     "return a etags-wrapper repo paths"
-    (let* ((pr-root (project-root (project-current)))
+    (let* ((pr-root (project-wrapepr-project-local-root))
            (info (cdr (assoc pr-root project-wrapper-project-info)))
            (root (project-wrapper-info-root info))
            (exclutions (project-wrapper-info-exclutions info))
@@ -68,18 +77,20 @@ env defaults to the project env set in project-wrapper-project-env"
 
 ; todo make sure that it is pr-root is alwais absolute
 (defun project-wrapper--get-project-env (pr-root)
-  (let ((pr-info (cdr (assoc pr-root project-wrapper-project-info))))
+  (let* ((proot (project-wrapepr-project-local-root pr-root))
+         (pr-info (cdr (assoc proot project-wrapper-project-info))))
     (project-wrapper-info-env pr-info)))
 
 (defun project-wrapper-initialize (pr-root &optional force-env-update)
   "initialize the project envirnment. Should this also set etags variables if possible"
   (when (or (not (project-wrapper--get-project-env pr-root)) force-env-update)
-    (let* ((info (cdr (assoc pr-root project-wrapper-project-info)))
+    (let* ((proot (project-wrapepr-project-local-root pr-root))
+           (info (cdr (assoc proot project-wrapper-project-info)))
            (envf (project-wrapper-info-get-env-func info))
            env)
       (if (null envf)
           (setf (project-wrapper-info-env info) process-environment) ; this needs to be done different
-        (setq env (funcall envf pr-root))
+        (setq env (funcall envf proot))
         (setf (project-wrapper-info-env info) env)))))
 
 (provide 'project-wrapper)
