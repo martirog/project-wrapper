@@ -77,6 +77,7 @@ env defaults to the project env set in project-wrapper-project-env"
 
 ; todo make sure that it is pr-root is alwais absolute
 (defun project-wrapper--get-project-env (pr-root)
+  "extract env from project info struct containing pr-root"
   (let* ((proot (project-wrapepr-project-local-root pr-root))
          (pr-info (cdr (assoc proot project-wrapper-project-info))))
     (project-wrapper-info-env pr-info)))
