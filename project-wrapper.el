@@ -62,25 +62,27 @@ env defaults to the project env set in project-wrapper-project-env"
   (defun project-wrapper-etags-paths-to-repos ()
     "return a etags-wrapper repo paths"
     (let* ((pr-root (project-wrapepr-project-local-root))
-           (info (cdr (assoc pr-root project-wrapper-project-info)))
-           (root (project-wrapper-info-root info))
-           (exclutions (project-wrapper-info-exclutions info))
-           (repos (project-wrapper-info-external-roots info))
-           (env (project-wrapper-info-env info))
-           repo
-           (ret (list (cons root (cons exclutions nil)))))
-      (dolist (repo repos ret)
-        (let ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
-              (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
-              (etw-static (project-wrapper-exroot-info-static repo)))
-          (add-to-list 'ret (cons etw-repo (cons etw-exclutions etw-static))))))))
+           (info (cdr (assoc pr-root project-wrapper-project-info))))
+      (when info
+          (let ((root (project-wrapper-info-root info))
+                (exclutions (project-wrapper-info-exclutions info))
+                (repos (project-wrapper-info-external-roots info))
+                (env (project-wrapper-info-env info))
+                repo
+                (ret (list (cons root (cons exclutions nil)))))
+            (dolist (repo repos ret)
+              (let ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
+                    (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
+                    (etw-static (project-wrapper-exroot-info-static repo)))
+                (add-to-list 'ret (cons etw-repo (cons etw-exclutions etw-static))))))))))
 
 ; todo make sure that it is pr-root is alwais absolute
 (defun project-wrapper--get-project-env (pr-root)
   "extract env from project info struct containing pr-root"
   (let* ((proot (project-wrapepr-project-local-root pr-root))
-         (pr-info (cdr (assoc proot project-wrapper-project-info))))
-    (project-wrapper-info-env pr-info)))
+         (info (assoc proot project-wrapper-project-info)))
+    (when info
+      (project-wrapper-info-env (cdr info)))))
 
 (defun project-wrapper-initialize (pr-root &optional force-env-update)
   "initialize the project envirnment. Should this also set etags variables if possible"
