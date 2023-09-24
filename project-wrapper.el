@@ -12,6 +12,7 @@
 
 (require 'cl-lib)
 (require 'tramp)
+(require 'project)
 
 (defgroup project-wrapper nil
   "wrapper for project.el to extend functionality"
@@ -19,6 +20,9 @@
 
 (defvar project-wrapper-project-info nil
   "alist of project info linked to project")
+
+(defvar project-wrapper-initialize-hook nil
+  "hook to run as a part of initialization. this to be able to reinitialize if the project updates")
 
 (defun project-wrapper-expand-with-env (path env)
   "expand environment variables based on the given env.
@@ -64,12 +68,12 @@ env defaults to the project env set in project-wrapper-project-env"
     (let* ((pr-root (project-wrapepr-project-local-root))
            (info (cdr (assoc pr-root project-wrapper-project-info))))
       (when info
-          (let ((root (project-wrapper-info-root info))
-                (exclutions (project-wrapper-info-exclutions info))
-                (repos (project-wrapper-info-external-roots info))
-                (env (project-wrapper-info-env info))
-                repo
-                (ret (list (cons root (cons exclutions nil)))))
+          (let* ((root (project-wrapper-info-root info))
+                 (exclutions (project-wrapper-info-exclutions info))
+                 (repos (project-wrapper-info-external-roots info))
+                 (env (project-wrapper-info-env info))
+                 repo
+                 (ret (list (cons root (cons exclutions nil)))))
             (dolist (repo repos ret)
               (let ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
                     (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
@@ -84,16 +88,24 @@ env defaults to the project env set in project-wrapper-project-env"
     (when info
       (project-wrapper-info-env (cdr info)))))
 
+(defun project-wrapper--set-project-env (pr-root)
+  "Run env function if present and return environment"
+  (let* ((proot (project-wrapepr-project-local-root pr-root))
+         (info (cdr (assoc proot project-wrapper-project-info))))
+    (when info
+      (let (envf (project-wrapper-info-get-env-func info))
+        (if (null envf)
+            process-environment ; this needs to be done different
+          (funcall envf proot))))))
+
 (defun project-wrapper-initialize (pr-root &optional force-env-update)
   "initialize the project envirnment. Should this also set etags variables if possible"
   (when (or (not (project-wrapper--get-project-env pr-root)) force-env-update)
     (let* ((proot (project-wrapepr-project-local-root pr-root))
-           (info (cdr (assoc proot project-wrapper-project-info)))
-           (envf (project-wrapper-info-get-env-func info))
-           env)
-      (if (null envf)
-          (setf (project-wrapper-info-env info) process-environment) ; this needs to be done different
-        (setq env (funcall envf proot))
-        (setf (project-wrapper-info-env info) env)))))
+           (info (cdr (assoc proot project-wrapper-project-info))))
+      (when info
+        (setf (project-wrapper-info-env info) (project-wrapper--set-project-env pr-root)))
+      (run-hook-with-args 'project-wrapper-initialize-hook pr-root))))
 
+;(defun project-wrapper-reinitialize-all-project-buffers)
 (provide 'project-wrapper)
