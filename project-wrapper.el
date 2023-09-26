@@ -93,7 +93,7 @@ env defaults to the project env set in project-wrapper-project-env"
   (let* ((proot (project-wrapepr-project-local-root pr-root))
          (info (cdr (assoc proot project-wrapper-project-info))))
     (when info
-      (let (envf (project-wrapper-info-get-env-func info))
+      (let ((envf (project-wrapper-info-get-env-func info)))
         (if (null envf)
             process-environment ; this needs to be done different
           (funcall envf proot))))))
