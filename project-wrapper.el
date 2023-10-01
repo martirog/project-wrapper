@@ -106,6 +106,15 @@ env defaults to the project env set in project-wrapper-project-env"
       (when info
         (setf (project-wrapper-info-env info) (project-wrapper--set-project-env pr-root)))
       (run-hook-with-args 'project-wrapper-initialize-hook pr-root))))
+(defun project-wrapper-generic-project-bufffers (project)
+  "Generic implementation of finding buffers under project root only. to simplefy first adoption"
+  (let ((root (expand-file-name (file-name-as-directory (project-root project))))
+        dd
+        bufs)
+    (dolist (buf (buffer-list))
+      (setq dd (expand-file-name (buffer-local-value 'default-directory buf)))
+      (when (string-prefix-p root dd)
+        (push buf bufs)))
+    (nreverse bufs)))
 
-;(defun project-wrapper-reinitialize-all-project-buffers)
 (provide 'project-wrapper)
