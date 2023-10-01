@@ -58,9 +58,10 @@ env defaults to the project env set in project-wrapper-project-env"
   "alwais return only local part of project root path"
   (let ((pr-root (or proot (project-root (project-current)))))
     (if (tramp-tramp-file-p pr-root)
-        (let ((vec (tramp-dissect-file-name pr-root)))
+        (let* ((t-root (tramp-handle-expand-file-name pr-root)) ; to remove ~
+               (vec (tramp-dissect-file-name t-root)))
           (tramp-file-name-localname vec))
-      pr-root)))
+      (expand-file-name pr-root)))) ; to remove ~
 
 (when (require 'etags-wrapper nil t)
   (defun project-wrapper-etags-paths-to-repos ()
@@ -104,8 +105,9 @@ env defaults to the project env set in project-wrapper-project-env"
     (let* ((proot (project-wrapepr-project-local-root pr-root))
            (info (cdr (assoc proot project-wrapper-project-info))))
       (when info
-        (setf (project-wrapper-info-env info) (project-wrapper--set-project-env pr-root)))
-      (run-hook-with-args 'project-wrapper-initialize-hook pr-root))))
+        (setf (project-wrapper-info-env info) (project-wrapper--set-project-env pr-root)))))
+  (run-hook-with-args 'project-wrapper-initialize-hook pr-root))
+
 (defun project-wrapper-generic-project-bufffers (project)
   "Generic implementation of finding buffers under project root only. to simplefy first adoption"
   (let ((root (expand-file-name (file-name-as-directory (project-root project))))
@@ -116,5 +118,15 @@ env defaults to the project env set in project-wrapper-project-env"
       (when (string-prefix-p root dd)
         (push buf bufs)))
     (nreverse bufs)))
+
+(defun project-wrapper-reinitialize-all-project-buffers (project)
+  "reinitialixe all buffers in this project"
+  (interactive (list (project-current)))
+  (let ((pbufs (project-buffers project))
+        (root (expand-file-name (file-name-as-directory (project-root project))))
+        (first t))
+    (mapcar (lambda (buf)
+              (with-current-buffer buf (project-wrapper-initialize root first))
+              (setq first nil)) pbufs)))
 
 (provide 'project-wrapper)
