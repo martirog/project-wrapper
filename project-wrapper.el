@@ -35,14 +35,14 @@ env defaults to the project env set in project-wrapper-project-env"
   "convert env string from the command env -0 to the format used in process-environment"
   (butlast (split-string tt "\0")))
 
-(cl-defstruct project-wrapper-info root exclutions external-roots env get-env-func)
+(cl-defstruct project-wrapper-info root exclutions external-roots env get-env-func etags-info)
 ; project information struct. this need more information going forward.
 ; root: the project root
 ; external-roots: project dependencies
 ; env: The shell environment for the project
 ; get-env-func: function to retrive the project environment
 
-(cl-defstruct project-wrapper-exroot-info root exclutions static)
+(cl-defstruct project-wrapper-exroot-info root exclutions etags-info)
 ; root is the external root
 ; exclutions are dictionaris under root to be excluded
 ; statis, if repo will not change
@@ -73,13 +73,16 @@ env defaults to the project env set in project-wrapper-project-env"
                  (exclutions (project-wrapper-info-exclutions info))
                  (repos (project-wrapper-info-external-roots info))
                  (env (project-wrapper-info-env info))
+                 (et-info (project-wrapper-info-etags-info info))
                  repo
-                 (ret (list (cons root (cons exclutions nil)))))
+                 (ret (list (make-etags-wrapper-etags-repo-info :root root :exclutions exclutions))))
             (dolist (repo repos ret)
               (let ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
                     (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
-                    (etw-static (project-wrapper-exroot-info-static repo)))
-                (add-to-list 'ret (cons etw-repo (cons etw-exclutions etw-static))))))))))
+                    (etw-elem (copy-etags-wrapper-etags-repo-info (project-wrapper-exroot-info-etags-info repo))))
+                (setf (etags-wrapper-etags-repo-info-root etw-elem) etw-repo)
+                (setf (etags-wrapper-etags-repo-info-exclutions etw-elem) etw-exclutions)
+                (add-to-list 'ret etw-elem))))))))
 
 ; todo make sure that it is pr-root is alwais absolute
 (defun project-wrapper--get-project-env (pr-root)
