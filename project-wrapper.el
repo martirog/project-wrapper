@@ -64,6 +64,15 @@ env defaults to the project env set in project-wrapper-project-env"
       (expand-file-name pr-root)))) ; to remove ~
 
 (when (require 'etags-wrapper nil t)
+  (defun project-wrapper--copy-etags-info-if-exist (et-info root exclutions)
+    (if et-info
+        (progn
+          (let ((eti (copy-etags-wrapper-etags-repo-info et-info)))
+            (setf (etags-wrapper-etags-repo-info-root eti) root)
+            (setf (etags-wrapper-etags-repo-info-exclutions eti) exclutions)
+            eti))
+      (make-etags-wrapper-etags-repo-info :root root :exclutions exclutions)))
+
   (defun project-wrapper-etags-paths-to-repos ()
     "return a etags-wrapper repo paths"
     (let* ((pr-root (project-wrapepr-project-local-root))
@@ -75,13 +84,11 @@ env defaults to the project env set in project-wrapper-project-env"
                  (env (project-wrapper-info-env info))
                  (et-info (project-wrapper-info-etags-info info))
                  repo
-                 (ret (list (make-etags-wrapper-etags-repo-info :root root :exclutions exclutions))))
-            (dolist (repo repos ret)
-              (let ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
-                    (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
-                    (etw-elem (copy-etags-wrapper-etags-repo-info (project-wrapper-exroot-info-etags-info repo))))
-                (setf (etags-wrapper-etags-repo-info-root etw-elem) etw-repo)
-                (setf (etags-wrapper-etags-repo-info-exclutions etw-elem) etw-exclutions)
+                 (ret (list (project-wrapper--copy-etags-info-if-exist et-info root exclutions))))
+	    (dolist (repo repos ret)
+              (let* ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
+                     (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
+                     (etw-elem (project-wrapper--copy-etags-info-if-exist (project-wrapper-exroot-info-etags-info repo) etw-repo etw-exclutions)))
                 (add-to-list 'ret etw-elem))))))))
 
 ; todo make sure that it is pr-root is alwais absolute
