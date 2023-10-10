@@ -139,4 +139,16 @@ env defaults to the project env set in project-wrapper-project-env"
               (with-current-buffer buf (project-wrapper-initialize root first))
               (setq first nil)) pbufs)))
 
+(defun project-wrapper--get-dir-parrent (dir)
+  "find parent directory"
+  (when (not (equal "/" dir))
+    (file-name-directory (directory-file-name dir))))
+
+(defun project-wrapper-walk-back-up-to-find-name-directory (dir name)
+  "check if directory contains the directory in question"
+  (if (file-directory-p (concat dir name))
+      dir
+    (project-wrapper-walk-back-up-to-find-name-directory (project-wrapper--get-dir-parrent dir) name)))
+
+
 (provide 'project-wrapper)
