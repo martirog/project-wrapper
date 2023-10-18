@@ -148,7 +148,8 @@ env defaults to the project env set in project-wrapper-project-env"
   "check if directory contains the directory in question"
   (if (file-directory-p (concat dir name))
       dir
-    (project-wrapper-walk-back-up-to-find-name-directory (project-wrapper--get-dir-parrent dir) name)))
+    (when dir
+      (project-wrapper-walk-back-up-to-find-name-directory (project-wrapper--get-dir-parrent dir) name))))
 
 
 (provide 'project-wrapper)
