@@ -141,8 +141,13 @@ env defaults to the project env set in project-wrapper-project-env"
 
 (defun project-wrapper--get-dir-parrent (dir)
   "find parent directory"
-  (when (not (equal "/" dir))
-    (file-name-directory (directory-file-name dir))))
+  (let ((clean-dir
+         (if (tramp-tramp-file-p dir)
+             (let ((vec (tramp-dissect-file-name dir)))
+               (tramp-file-name-localname vec))
+           dir)))
+    (when (not (equal "/" clean-dir))
+      (file-name-directory (directory-file-name dir)))))
 
 (defun project-wrapper-walk-back-up-to-find-name-directory (dir name)
   "check if directory contains the directory in question"
