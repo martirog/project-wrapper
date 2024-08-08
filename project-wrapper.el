@@ -35,7 +35,7 @@ env defaults to the project env set in project-wrapper-project-env"
   "convert env string from the command env -0 to the format used in process-environment"
   (butlast (split-string env-string "\0")))
 
-(cl-defstruct project-wrapper-info root exclutions external-roots env get-env-func etags-info)
+(cl-defstruct project-wrapper-info root exclutions external-roots env get-env-func etags-info compile-cmd)
 ; project information struct. this need more information going forward.
 ; root: the project root
 ; external-roots: project dependencies
@@ -109,14 +109,25 @@ env defaults to the project env set in project-wrapper-project-env"
             process-environment ; this needs to be done different
           (funcall envf proot))))))
 
+(defun project-wrapper-get-compile-cmd (pr-root)
+  (let* ((proot (project-wrapepr-project-local-root pr-root))
+         (info (cdr (assoc proot project-wrapper-project-info))))
+    (when info
+      (project-wrapper-info-compile-cmd info))))
+
 (defun project-wrapper-initialize (pr-root &optional force-env-update)
   "initialize the project envirnment. Should this also set etags variables if possible"
-  (when (or (not (project-wrapper--get-project-env pr-root)) force-env-update)
-    (let* ((proot (project-wrapepr-project-local-root pr-root))
-           (info (cdr (assoc proot project-wrapper-project-info))))
-      (when info
-        (setf (project-wrapper-info-env info) (project-wrapper--set-project-env pr-root)))))
-  (run-hook-with-args 'project-wrapper-initialize-hook pr-root))
+  (message "initializing project %s" pr-root)
+  (let (comp-cmd)
+    (when (or (not (project-wrapper--get-project-env pr-root)) force-env-update)
+      (let* ((proot (project-wrapepr-project-local-root pr-root))
+             (info (cdr (assoc proot project-wrapper-project-info))))
+        (when info
+          (setf (project-wrapper-info-env info) (project-wrapper--set-project-env pr-root))
+          (setq comp-cmd (project-wrapper-info-compile-cmd info)))))
+    (when comp-cmd
+      (setq-local compile-command comp-cmd))
+    (run-hook-with-args 'project-wrapper-initialize-hook pr-root)))
 
 (defun project-wrapper-generic-project-bufffers (project)
   "Generic implementation of finding buffers under project root only. to simplefy first adoption"
