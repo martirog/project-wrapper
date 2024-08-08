@@ -33,7 +33,7 @@ env defaults to the project env set in project-wrapper-project-env"
 
 (defun project-wrapper-env-0 (env-string)
   "convert env string from the command env -0 to the format used in process-environment"
-  (butlast (split-string tt "\0")))
+  (butlast (split-string env-string "\0")))
 
 (cl-defstruct project-wrapper-info root exclutions external-roots env get-env-func etags-info)
 ; project information struct. this need more information going forward.
