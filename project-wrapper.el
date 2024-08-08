@@ -66,11 +66,10 @@ env defaults to the project env set in project-wrapper-project-env"
 (when (require 'etags-wrapper nil t)
   (defun project-wrapper--copy-etags-info-if-exist (et-info root exclutions)
     (if et-info
-        (progn
-          (let ((eti (copy-etags-wrapper-etags-repo-info et-info)))
-            (setf (etags-wrapper-etags-repo-info-root eti) root)
-            (setf (etags-wrapper-etags-repo-info-exclutions eti) exclutions)
-            eti))
+        (let ((eti (copy-etags-wrapper-etags-repo-info et-info)))
+          (setf (etags-wrapper-etags-repo-info-root eti) root)
+          (setf (etags-wrapper-etags-repo-info-exclutions eti) exclutions)
+          eti)
       (make-etags-wrapper-etags-repo-info :root root :exclutions exclutions)))
 
   (defun project-wrapper-etags-paths-to-repos ()
