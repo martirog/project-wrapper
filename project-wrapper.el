@@ -76,19 +76,20 @@ env defaults to the project env set in project-wrapper-project-env"
     "return a etags-wrapper repo paths"
     (let* ((pr-root (project-wrapepr-project-local-root))
            (info (cdr (assoc pr-root project-wrapper-project-info))))
-      (when info
+      (if info
           (let* ((root (project-wrapper-info-root info))
                  (exclutions (project-wrapper-info-exclutions info))
                  (repos (project-wrapper-info-external-roots info))
                  (env (project-wrapper-info-env info))
                  (et-info (project-wrapper-info-etags-info info))
-                 repo
                  (ret (list (project-wrapper--copy-etags-info-if-exist et-info root exclutions))))
 	    (dolist (repo repos ret)
               (let* ((etw-repo (project-wrapper-expand-with-env (project-wrapper-exroot-info-root repo) env))
                      (etw-exclutions (project-wrapper-exroot-info-exclutions repo))
                      (etw-elem (project-wrapper--copy-etags-info-if-exist (project-wrapper-exroot-info-etags-info repo) etw-repo etw-exclutions)))
-                (add-to-list 'ret etw-elem))))))))
+                (add-to-list 'ret etw-elem))))
+        (message "no info found for root %s" pr-root)
+        nil))))
 
 ; todo make sure that it is pr-root is alwais absolute
 (defun project-wrapper--get-project-env (pr-root)
