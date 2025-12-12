@@ -91,6 +91,15 @@ env defaults to the project env set in project-wrapper-project-env"
         (message "no info found for root %s" pr-root)
         nil))))
 
+(defun project-wrapper-expand-with-project-env (path)
+  "expand path with environment variables from current project environment"
+  (let* ((pr-root (project-wrapepr-project-local-root))
+         (info (cdr (assoc pr-root project-wrapper-project-info))))
+    (if info
+        (let ((env (project-wrapper-info-env info)))
+          (project-wrapper-expand-with-env path env))
+      path)))
+
 ; todo make sure that it is pr-root is alwais absolute
 (defun project-wrapper--get-project-env (pr-root)
   "extract env from project info struct containing pr-root"
